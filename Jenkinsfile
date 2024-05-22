@@ -18,15 +18,15 @@ pipeline {
                             parallel(
                                 testFirstApp: {
                                     database.withRun("--name django_pytest_jenkins_postgres_first -e 'POSTGRES_DB=django_pytest_jenkins_test_first' -e 'POSTGRES_USER=django_pytest_jenkins_test' -e 'POSTGRES_PASSWORD=django_pytest_jenkins_test' --network-alias postgres1 --net postgres-net") { c ->
-                                        appTest.inside("--net postgres-net --entrypoint='' --user 0:0 -v ${reportDir}:/srv/django_pytest_jenkins/test-reports -e 'DB_HOST=postgres1'") {
-                                            sh "cd /srv/django_pytest_jenkins; python -m pytest django_pytest_jenkins_tests/test_first_app.py --cov-report=xml:/srv/django_pytest_jenkins/test-reports/coverage1.xml --junitxml=/srv/django_pytest_jenkins/test-reports/pytest-report1.xml"
+                                        appTest.inside("--net postgres-net --entrypoint='' --user 0:0 -e 'DB_HOST=postgres1'") {
+                                            sh "cd /srv/django_pytest_jenkins; python -m pytest django_pytest_jenkins_tests/test_first_app.py --cov-report=xml:/srv/django_pytest_jenkins/test-reports/coverage.xml --junitxml=/srv/django_pytest_jenkins/test-reports/pytest-report.xml"
                                         }
                                     }
                                 },
                                 testSecondApp: {
                                     database.withRun("--name django_pytest_jenkins_postgres_second -e 'POSTGRES_DB=django_pytest_jenkins_test_second' -e 'POSTGRES_USER=django_pytest_jenkins_test' -e 'POSTGRES_PASSWORD=django_pytest_jenkins_test' --network-alias postgres2 --net postgres-net") { c ->
-                                        appTest.inside("--net postgres-net --entrypoint='' --user 0:0 -v ${reportDir}:/srv/django_pytest_jenkins/test-reports -e 'DB_HOST=postgres2'") {
-                                            sh "cd /srv/django_pytest_jenkins; python -m pytest django_pytest_jenkins_tests/test_second_app.py --cov-report=xml:/srv/django_pytest_jenkins/test-reports/coverage2.xml --junitxml=/srv/django_pytest_jenkins/test-reports/pytest-report2.xml"
+                                        appTest.inside("--net postgres-net --entrypoint='' --user 0:0 -e 'DB_HOST=postgres2'") {
+                                            sh "cd /srv/django_pytest_jenkins; python -m pytest django_pytest_jenkins_tests/test_second_app.py --cov-report=xml:/srv/django_pytest_jenkins/test-reports/coverage.xml --junitxml=/srv/django_pytest_jenkins/test-reports/pytest-report.xml"
                                         }
                                     }
                                 }
@@ -37,8 +37,14 @@ pipeline {
             }
             post {
                 always {
-                    junit '**/test-reports/pytest-report*.xml'
-                    recordCoverage(tools: [[parser: 'COBERTURA', pattern: '**/test-reports/coverage*.xml']])
+                    script {
+                        sh "docker cp django_pytest_jenkins_postgres_first:/srv/django_pytest_jenkins/test-reports ${WORKSPACE}/test-reports-first-app"
+                        sh "docker cp django_pytest_jenkins_postgres_second:/srv/django_pytest_jenkins/test-reports ${WORKSPACE}/test-reports-second-app"
+                    }
+                    junit '**/test-reports-first-app/pytest-report.xml'
+                    junit '**/test-reports-second-app/pytest-report.xml'
+                    recordCoverage(tools: [[parser: 'COBERTURA', pattern: '**/test-reports-first-app/coverage.xml']])
+                    recordCoverage(tools: [[parser: 'COBERTURA', pattern: '**/test-reports-second-app/coverage.xml']])
                 }
             }
         }
