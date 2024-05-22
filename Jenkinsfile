@@ -36,6 +36,7 @@ pipeline {
                                     }
                                 }
                             )
+                            sh "docker cp django_pytest_jenkins_latest-test:/srv/django_pytest_jenkins/test-results ${env.WORKSPACE}/"
                         }
                     }
                 }
