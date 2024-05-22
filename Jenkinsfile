@@ -44,7 +44,6 @@ pipeline {
                     script {
                         junit "test-results/pytest-report*.xml"
                         recordCoverage(tools: [[parser: 'COBERTURA', pattern: "test-results/coverage*.xml"]])
-                        sh "docker rm -f $(docker ps -aq)"
                     }
                 }
             }
