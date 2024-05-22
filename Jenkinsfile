@@ -16,28 +16,32 @@ pipeline {
                             sh "mkdir -p test-results && chmod 777 test-results"
                             parallel(
                                 testFirstApp: {
+                                    def containerId1 = ''
                                     database.withRun("--name django_pytest_jenkins_postgres_first -e 'POSTGRES_DB=django_pytest_jenkins_test_first' -e 'POSTGRES_USER=django_pytest_jenkins_test' -e 'POSTGRES_PASSWORD=django_pytest_jenkins_test' --network-alias postgres1 --net postgres-net") { c ->
-                                        appTest.inside("-v ${env.WORKSPACE}/test-results:/srv/django_pytest_jenkins/test-results --net postgres-net --entrypoint='' --user 0:0 -e 'DB_HOST=postgres1'") {
+                                        appTest.inside("-v ${env.WORKSPACE}/test-results:/srv/django_pytest_jenkins/test-results --net postgres-net --entrypoint='' --user 0:0 -e 'DB_HOST=postgres1'") { appTestContainer ->
+                                            containerId1 = appTestContainer.id
                                             sh """
                                                 cd /srv/django_pytest_jenkins
                                                 python -m pytest django_pytest_jenkins_tests/test_first_app.py --cov-report=xml:test-results/coverage1.xml --junitxml=test-results/pytest-report1.xml
                                             """
                                         }
                                     }
+                                    sh "docker cp ${containerId1}:/srv/django_pytest_jenkins/test-results/* ${env.WORKSPACE}/test-results/*"
                                 },
                                 testSecondApp: {
+                                    def containerId2 = ''
                                     database.withRun("--name django_pytest_jenkins_postgres_second -e 'POSTGRES_DB=django_pytest_jenkins_test_second' -e 'POSTGRES_USER=django_pytest_jenkins_test' -e 'POSTGRES_PASSWORD=django_pytest_jenkins_test' --network-alias postgres2 --net postgres-net") { c ->
-                                        appTest.inside("-v ${env.WORKSPACE}/test-results:/srv/django_pytest_jenkins/test-results --net postgres-net --entrypoint='' --user 0:0 -e 'DB_HOST=postgres2'") {
+                                        appTest.inside("-v ${env.WORKSPACE}/test-results:/srv/django_pytest_jenkins/test-results --net postgres-net --entrypoint='' --user 0:0 -e 'DB_HOST=postgres2'") { appTestContainer ->
+                                            containerId2 = appTestContainer.id
                                             sh """
                                                 cd /srv/django_pytest_jenkins
                                                 python -m pytest django_pytest_jenkins_tests/test_second_app.py --cov-report=xml:test-results/coverage2.xml --junitxml=test-results/pytest-report2.xml
                                             """
                                         }
                                     }
+                                    sh "docker cp ${containerId2}:/srv/django_pytest_jenkins/test-results/* ${env.WORKSPACE}/test-results/*"
                                 }
                             )
-                            def containerId = sh(script: "docker ps -qf name=laurielias/django_pytest_jenkins:latest-test", returnStdout: true).trim()
-                            sh "docker cp ${containerId}:/srv/django_pytest_jenkins/test-results ${env.WORKSPACE}/"
                         }
                     }
                 }
