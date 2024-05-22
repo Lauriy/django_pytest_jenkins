@@ -92,8 +92,8 @@ DATABASES = {
     }
 }
 
-if os.environ.get('IS_JENKINS_EXECUTOR') == 'True':
-    DATABASES['default']['HOST'] = 'postgres'
+if db_host := os.environ.get('DB_HOST'):
+    DATABASES['default']['HOST'] = db_host
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators

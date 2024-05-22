@@ -17,15 +17,15 @@ pipeline {
                             sh "docker network create --driver bridge postgres-net || true"
                             parallel(
                                 testFirstApp: {
-                                    database.withRun("--name django_pytest_jenkins_postgres_first -e 'POSTGRES_DB=django_pytest_jenkins_test_first' -e 'POSTGRES_USER=django_pytest_jenkins_test' -e 'POSTGRES_PASSWORD=django_pytest_jenkins_test' --network-alias postgres --net postgres-net") { c ->
-                                        appTest.inside("--net postgres-net --entrypoint='' --user 0:0 -v ${reportDir}:/srv/django_pytest_jenkins/test-reports -e IS_JENKINS_EXECUTOR=True") {
+                                    database.withRun("--name django_pytest_jenkins_postgres_first -e 'POSTGRES_DB=django_pytest_jenkins_test_first' -e 'POSTGRES_USER=django_pytest_jenkins_test' -e 'POSTGRES_PASSWORD=django_pytest_jenkins_test' --network-alias postgres1 --net postgres-net") { c ->
+                                        appTest.inside("--net postgres-net --entrypoint='' --user 0:0 -v ${reportDir}:/srv/django_pytest_jenkins/test-reports -e 'DB_HOST=postgres1'") {
                                             sh "cd /srv/django_pytest_jenkins; python -m pytest . django_pytest_jenkins_tests/test_first_app.py --cov-report=xml:/srv/django_pytest_jenkins/test-reports/coverage1.xml --junitxml=/srv/django_pytest_jenkins/test-reports/pytest-report1.xml"
                                         }
                                     }
                                 },
                                 testSecondApp: {
-                                    database.withRun("--name django_pytest_jenkins_postgres_second -e 'POSTGRES_DB=django_pytest_jenkins_test_second' -e 'POSTGRES_USER=django_pytest_jenkins_test' -e 'POSTGRES_PASSWORD=django_pytest_jenkins_test' --network-alias postgres --net postgres-net") { c ->
-                                        appTest.inside("--net postgres-net --entrypoint='' --user 0:0 -v ${reportDir}:/srv/django_pytest_jenkins/test-reports -e IS_JENKINS_EXECUTOR=True") {
+                                    database.withRun("--name django_pytest_jenkins_postgres_second -e 'POSTGRES_DB=django_pytest_jenkins_test_second' -e 'POSTGRES_USER=django_pytest_jenkins_test' -e 'POSTGRES_PASSWORD=django_pytest_jenkins_test' --network-alias postgres2 --net postgres-net") { c ->
+                                        appTest.inside("--net postgres-net --entrypoint='' --user 0:0 -v ${reportDir}:/srv/django_pytest_jenkins/test-reports -e 'DB_HOST=postgres2'") {
                                             sh "cd /srv/django_pytest_jenkins; python -m pytest . django_pytest_jenkins_tests/test_second_app.py --cov-report=xml:/srv/django_pytest_jenkins/test-reports/coverage2.xml --junitxml=/srv/django_pytest_jenkins/test-reports/pytest-report2.xml"
                                         }
                                     }
