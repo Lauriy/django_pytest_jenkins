@@ -16,7 +16,7 @@ pipeline {
                             parallel(
                                 testFirstApp: {
                                     database.withRun("--name django_pytest_jenkins_postgres_first -e 'POSTGRES_DB=django_pytest_jenkins_test_first' -e 'POSTGRES_USER=django_pytest_jenkins_test' -e 'POSTGRES_PASSWORD=django_pytest_jenkins_test' --network-alias postgres1 --net postgres-net") { c ->
-                                        appTest.inside("-v ${env.WORKSPACE}/test-results:/srv/django_pytest_jenkins/test-results --net postgres-net --entrypoint='' --user 0:0 -e 'DB_HOST=postgres1'") {
+                                        appTest.inside("-v ${env.WORKSPACE}/test-results:/srv/django_pytest_jenkins/test-results --net postgres-net --entrypoint='' -e 'DB_HOST=postgres1'") {
                                             sh """
                                                 cd /srv/django_pytest_jenkins
                                                 python -m pytest django_pytest_jenkins_tests/test_first_app.py --cov-report=xml:test-results/coverage1.xml --junitxml=test-results/pytest-report1.xml
@@ -26,7 +26,7 @@ pipeline {
                                 },
                                 testSecondApp: {
                                     database.withRun("--name django_pytest_jenkins_postgres_second -e 'POSTGRES_DB=django_pytest_jenkins_test_second' -e 'POSTGRES_USER=django_pytest_jenkins_test' -e 'POSTGRES_PASSWORD=django_pytest_jenkins_test' --network-alias postgres2 --net postgres-net") { c ->
-                                        appTest.inside("-v ${env.WORKSPACE}/test-results:/srv/django_pytest_jenkins/test-results --net postgres-net --entrypoint='' --user 0:0 -e 'DB_HOST=postgres2'") {
+                                        appTest.inside("-v ${env.WORKSPACE}/test-results:/srv/django_pytest_jenkins/test-results --net postgres-net --entrypoint='' -e 'DB_HOST=postgres2'") {
                                             sh """
                                                 cd /srv/django_pytest_jenkins
                                                 python -m pytest django_pytest_jenkins_tests/test_second_app.py --cov-report=xml:test-results/coverage2.xml --junitxml=test-results/pytest-report2.xml
