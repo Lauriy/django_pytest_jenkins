@@ -10,36 +10,22 @@ pipeline {
                     sshagent(credentials: ['laurielias']) {
                         withEnv(["HOME=${env.WORKSPACE}"]) {
                             def database = docker.image("postgres")
-                            def appRuntime = docker.build("laurielias/django_pytest_jenkins:latest", "-t laurielias/django_pytest_jenkins:latest --target common --ssh default .")
-                            def appTest = docker.build("laurielias/django_pytest_jenkins:latest-test", "--target test-runner --ssh default .")
                             sh "docker network create --driver bridge postgres-net || true"
-                            sh "mkdir -p test-results && chmod 777 test-results"
+                            sh "mkdir -p test-results && chmod 777 test-results && rm -rf test-results/*"
+                            sh "docker build -t laurielias/django_pytest_jenkins:latest --ssh default --target common ."
+                            sh "docker build -t laurielias/django_pytest_jenkins:latest-test --ssh default --target test-runner ."
                             parallel(
                                 testFirstApp: {
-                                    def containerId1 = ''
                                     database.withRun("--name django_pytest_jenkins_postgres_first -e 'POSTGRES_DB=django_pytest_jenkins_test_first' -e 'POSTGRES_USER=django_pytest_jenkins_test' -e 'POSTGRES_PASSWORD=django_pytest_jenkins_test' --network-alias postgres1 --net postgres-net") { c ->
-                                        appTest.inside("-v ${env.WORKSPACE}/test-results:/srv/django_pytest_jenkins/test-results --net postgres-net --entrypoint='' --user 0:0 -e 'DB_HOST=postgres1'") { appTestContainer ->
-                                            containerId1 = appTestContainer.id
-                                            sh """
-                                                cd /srv/django_pytest_jenkins
-                                                python -m pytest django_pytest_jenkins_tests/test_first_app.py --cov-report=xml:test-results/coverage1.xml --junitxml=test-results/pytest-report1.xml
-                                            """
-                                        }
+                                        sh "docker rm temp-container1 || true"
+                                        sh "docker run --name temp-container1 --entrypoint='' --user 0:0 -e 'DB_HOST=postgres1' --net postgres-net -v ${env.WORKSPACE}/test-results:/srv/django_pytest_jenkins/test-results python -m pytest django_pytest_jenkins_tests/test_first_app.py --cov-report=xml:test-results/coverage1.xml --junitxml=test-results/pytest-report1.xml"
                                     }
-                                    sh "docker cp ${containerId1}:/srv/django_pytest_jenkins/test-results/* ${env.WORKSPACE}/test-results/*"
                                 },
                                 testSecondApp: {
-                                    def containerId2 = ''
                                     database.withRun("--name django_pytest_jenkins_postgres_second -e 'POSTGRES_DB=django_pytest_jenkins_test_second' -e 'POSTGRES_USER=django_pytest_jenkins_test' -e 'POSTGRES_PASSWORD=django_pytest_jenkins_test' --network-alias postgres2 --net postgres-net") { c ->
-                                        appTest.inside("-v ${env.WORKSPACE}/test-results:/srv/django_pytest_jenkins/test-results --net postgres-net --entrypoint='' --user 0:0 -e 'DB_HOST=postgres2'") { appTestContainer ->
-                                            containerId2 = appTestContainer.id
-                                            sh """
-                                                cd /srv/django_pytest_jenkins
-                                                python -m pytest django_pytest_jenkins_tests/test_second_app.py --cov-report=xml:test-results/coverage2.xml --junitxml=test-results/pytest-report2.xml
-                                            """
-                                        }
+                                        sh "docker rm temp-container2 || true"
+                                        sh "docker run --name temp-container2 --entrypoint='' --user 0:0 -e 'DB_HOST=postgres2' --net postgres-net -v ${env.WORKSPACE}/test-results:/srv/django_pytest_jenkins/test-results python -m pytest django_pytest_jenkins_tests/test_second_app.py --cov-report=xml:test-results/coverage2.xml --junitxml=test-results/pytest-report2.xml"
                                     }
-                                    sh "docker cp ${containerId2}:/srv/django_pytest_jenkins/test-results/* ${env.WORKSPACE}/test-results/*"
                                 }
                             )
                         }
@@ -51,6 +37,10 @@ pipeline {
                     script {
                         junit "test-results/pytest-report*.xml"
                         recordCoverage(tools: [[parser: 'COBERTURA', pattern: "test-results/coverage*.xml"]])
+                        sh "docker stop temp-container1 || true"
+                        sh "docker stop temp-container2 || true"
+                        sh "docker rm temp-container1 || true"
+                        sh "docker rm temp-container2 || true"
                     }
                 }
             }
