@@ -49,7 +49,7 @@ pipeline {
                         def reportDir = "${env.WORKSPACE}/test-reports"
                         sh "ls -l ${reportDir}"
                         junit "${reportDir}/pytest-report*.xml"
-                        recordCoverage(tools: [[parser: 'COBERTURA', pattern: "${reportDir}/coverage*.xml"]])
+                        recordCoverage(tools: [[parser: 'COBERTURA', pattern: "${reportDir}/coverage*.xml", id: 'cobertura', name: 'Cobertura Coverage', sourceCodeRetention: 'EVERY_BUILD']])
                     }
                 }
             }
