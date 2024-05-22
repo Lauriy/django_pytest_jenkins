@@ -48,11 +48,9 @@ pipeline {
             }
         }
         stage('Push to Dockerhub') {
+            agent any
             steps {
-                withCredentials([usernamePassword(credentialsId: 'laurielias-dockerhub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]) {
-                    sh """
-                        echo ${env.dockerHubPassword} | docker login -u ${env.dockerHubUser} --password-stdin
-                    """
+                withDockerRegistry([ credentialsId: 'laurielias-dockerhub', url: '' ]) {
                     sh "docker push laurielias/django_pytest_jenkins:latest"
                 }
             }
