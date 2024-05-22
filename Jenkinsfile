@@ -36,7 +36,8 @@ pipeline {
                                     }
                                 }
                             )
-                            sh "docker cp django_pytest_jenkins_latest-test:/srv/django_pytest_jenkins/test-results ${env.WORKSPACE}/"
+                            def containerId = sh(script: "docker ps -qf name=laurielias/django_pytest_jenkins:latest-test", returnStdout: true).trim()
+                            sh "docker cp ${containerId}:/srv/django_pytest_jenkins/test-results ${env.WORKSPACE}/"
                         }
                     }
                 }
