@@ -50,7 +50,9 @@ pipeline {
         stage('Push to Dockerhub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'laurielias-dockerhub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]) {
-                    sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPassword}"
+                    sh """
+                        echo ${env.dockerHubPassword} | docker login -u ${env.dockerHubUser} --password-stdin
+                    """
                     sh "docker push laurielias/django_pytest_jenkins:latest"
                 }
             }
