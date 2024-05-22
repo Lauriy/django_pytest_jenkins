@@ -18,8 +18,10 @@ from django.contrib import admin
 from django.urls import path
 
 from first_app.views import do_stuff
+from second_app.views import do_other_stuff
 
 urlpatterns = [
     path('do-stuff/<int:stuff_id>', do_stuff, name='do-stuff'),
+    path('do-other-stuff/<int:stuff_id>', do_other_stuff, name='do-other-stuff'),
     path('admin/', admin.site.urls),
 ]
