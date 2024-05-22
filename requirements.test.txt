@@ -1,0 +1,6 @@
+factory_boy
+pytest
+pytest-django
+pytest-profiling
+pytest-random-order
+pytest-xdist

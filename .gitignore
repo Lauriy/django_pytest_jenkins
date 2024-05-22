@@ -1,0 +1,6 @@
+/.venv/
+/.idea/
+/django_pytest_jenkins_tests/prof/
+/prof/
+
+/db.sqlite3
