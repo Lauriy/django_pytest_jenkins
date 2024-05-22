@@ -37,11 +37,8 @@ pipeline {
             }
             post {
                 always {
-                    withEnv(["HOME=${env.WORKSPACE}"]) {
-                        def reportDir = "${WORKSPACE}/test-reports"
-                        junit "${reportDir}/pytest-report*.xml"
-                        recordCoverage(tools: [[parser: 'COBERTURA', pattern: "${reportDir}/coverage*.xml"]])
-                    }
+                    junit '**/test-reports/pytest-report*.xml'
+                    recordCoverage(tools: [[parser: 'COBERTURA', pattern: '**/test-reports/coverage*.xml']])
                 }
             }
         }
